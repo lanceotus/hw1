@@ -2,15 +2,19 @@ import ast
 import os
 import collections
 
-from service_funcs import flat, is_verb
+from service_funcs import flat, is_verb, is_reserved_name
 
 
 def get_trees(dirpath, with_filenames=False, with_file_content=False):
     filenames = []
     trees = []
     for dirname, dirs, files in os.walk(dirpath, topdown=True):
+        if len(filenames) == 100:
+            break
         for file in files:
-            if file.endswith('.py') and len(filenames) < 100:
+            if len(filenames) == 100:
+                break
+            if file.endswith('.py'):
                 filenames.append(os.path.join(dirname, file))
     print('total %s files' % len(filenames))
     for filename in filenames:
@@ -43,7 +47,7 @@ def get_verbs_from_function_name(function_name):
 def get_all_words_in_path(dirpath):
     trees = [t for t in get_trees(dirpath) if t]
     names = [get_all_names(t) for t in trees]
-    function_names = [f for f in flat(names) if not (f.startswith('__') and f.endswith('__'))]
+    function_names = [f for f in flat(names) if not is_reserved_name(f)]
     words = []
     for function_name in function_names:
         words += [n for n in function_name.split('_') if n]
@@ -55,7 +59,7 @@ def get_top_verbs_in_path(dirpath, top_size=10):
     nodes = []
     for t in trees:
         nodes += [node.name.lower() for node in ast.walk(t) if isinstance(node, ast.FunctionDef)]
-    function_names = [f for f in nodes if not (f.startswith('__') and f.endswith('__'))]
+    function_names = [f for f in nodes if not is_reserved_name(f)]
     print('functions extracted')
     verbs = flat([get_verbs_from_function_name(function_name) for function_name in function_names])
     return collections.Counter(verbs).most_common(top_size)
@@ -65,7 +69,7 @@ def get_top_functions_names_in_path(dirpath, top_size=10):
     nodes = []
     for t in get_trees(dirpath):
         nodes += [node.name.lower() for node in ast.walk(t) if isinstance(node, ast.FunctionDef)]
-    nms = [f for f in nodes if not (f.startswith('__') and f.endswith('__'))]
+    nms = [f for f in nodes if not is_reserved_name(f)]
     return collections.Counter(nms).most_common(top_size)
 
 

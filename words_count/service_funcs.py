@@ -13,3 +13,6 @@ def is_verb(word):
         download('averaged_perceptron_tagger')
         pos_info = pos_tag([word])
     return pos_info[0][1] == 'VB'
+
+def is_reserved_name(name):
+    return (name.startswith('__') and name.endswith('__'))
